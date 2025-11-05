@@ -164,5 +164,6 @@ def send_message(data):
 
 if __name__ == "__main__":
     if not os.path.exists(DB_PATH): init_db()
-    print("Server running on 0.0.0.0:5000")
-    socketio.run(app, host="0.0.0.0", port=5000)
+    print("Server running on 0.0.0.0:8080")
+    socketio.run(app, host="0.0.0.0", port=8080)
+
