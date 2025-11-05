@@ -1,18 +1,17 @@
-# --- Sử dụng Python làm môi trường ---
-FROM python:3.10
+# Base image: Python 3.10
+FROM python:3.10-slim
 
-# Tạo thư mục làm việc
+# Làm việc trong thư mục /app
 WORKDIR /app
 
 # Sao chép toàn bộ mã nguồn vào container
 COPY . .
 
-# Cài thư viện cần thiết
-RUN pip install --no-cache-dir -r requirements.txt
+# Cài đặt Flask và SocketIO
+RUN pip install --no-cache-dir flask flask-socketio eventlet
 
-# Expose cổng 5000
+# Zeabur dùng port 8080
 EXPOSE 8080
 
-# Chạy ứng dụng
+# Chạy app
 CMD ["python", "app.py"]
-
