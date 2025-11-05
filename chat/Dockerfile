@@ -11,7 +11,8 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose cổng 5000
-EXPOSE 5000
+EXPOSE 8080
 
 # Chạy ứng dụng
 CMD ["python", "app.py"]
+
