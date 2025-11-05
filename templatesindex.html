@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Kiên Chat 💬</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body>
+    <div id="chat-box">
+        <h2>🔥 KienVNNN Chat</h2>
+        <div id="messages"></div>
+
+        <div id="input-area">
+            <input id="message-input" type="text" placeholder="Nhập tin nhắn..." autocomplete="off">
+            <button id="send-btn">Gửi</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const msgBox = document.getElementById("messages");
+        const input = document.getElementById("message-input");
+        const sendBtn = document.getElementById("send-btn");
+
+        function addMessage(msg) {
+            const div = document.createElement("div");
+            div.classList.add("msg");
+            div.innerHTML = `
+                <span>${msg.text}</span>
+                <button class="del" onclick="deleteMessage(${msg.id})">🗑️</button>
+            `;
+            msgBox.prepend(div);
+        }
+
+        // Tải tin nhắn cũ
+        fetch("/api/messages").then(r => r.json()).then(data => {
+            data.reverse().forEach(addMessage);
+        });
+
+        // Gửi tin nhắn
+        sendBtn.onclick = () => {
+            const text = input.value.trim();
+            if (text) {
+                socket.emit("send_message", { text });
+                input.value = "";
+            }
+        };
+
+        // Nhận tin nhắn mới
+        socket.on("new_message", msg => addMessage(msg));
+
+        // Nhận tín hiệu xóa
+        socket.on("delete_message", data => {
+            const all = document.querySelectorAll(".msg");
+            all.forEach(div => {
+                if (div.innerHTML.includes(`deleteMessage(${data.id})`)) div.remove();
+            });
+        });
+
+        // Hàm xóa tin nhắn
+        function deleteMessage(id) {
+            fetch(`/api/delete/${id}`, { method: "DELETE" });
+        }
+    </script>
+</body>
+</html>
