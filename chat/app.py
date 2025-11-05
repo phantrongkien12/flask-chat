@@ -1,6 +1,6 @@
 # app.py
 # Flask-SocketIO realtime chat board with irreversible delete
-# Run: python app.py
+# Compatible with Zeabur deployment (auto PORT)
 
 from flask import Flask, request, g, jsonify, render_template_string
 from flask_socketio import SocketIO, emit
@@ -11,7 +11,6 @@ import os
 DB_PATH = "chat.db"
 
 app = Flask(__name__)
-# set secret key from env if available
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'supersecret')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -22,7 +21,6 @@ def get_db():
         db = g._database = sqlite3.connect(DB_PATH, check_same_thread=False)
         db.row_factory = sqlite3.Row
     return db
-
 
 def init_db():
     db = sqlite3.connect(DB_PATH)
@@ -35,7 +33,6 @@ def init_db():
     """)
     db.commit()
     db.close()
-
 
 @app.teardown_appcontext
 def close_db(exception):
@@ -146,7 +143,6 @@ def delete_message(msg_id):
     db = get_db()
     db.execute("DELETE FROM messages WHERE id = ?", (msg_id,))
     db.commit()
-    # thông báo cho tất cả client xoá
     socketio.emit("delete_message", {"id": msg_id}, broadcast=True)
     return "", 204
 
@@ -154,16 +150,19 @@ def delete_message(msg_id):
 @socketio.on('send_message')
 def send_message(data):
     text = data.get("text", "").strip()
-    if not text: return
+    if not text:
+        return
     now = datetime.utcnow().isoformat() + "Z"
     db = get_db()
-    cur = db.execute("INSERT INTO messages (text, created_at) VALUES (?,?)",(text,now))
+    cur = db.execute("INSERT INTO messages (text, created_at) VALUES (?,?)", (text, now))
     db.commit()
-    msg = {"id":cur.lastrowid,"text":text,"created_at":now}
+    msg = {"id": cur.lastrowid, "text": text, "created_at": now}
     emit("new_message", msg, broadcast=True)
 
+# --- Run ---
 if __name__ == "__main__":
-    if not os.path.exists(DB_PATH): init_db()
-    print("Server running on 0.0.0.0:8080")
-    socketio.run(app, host="0.0.0.0", port=8080)
-
+    if not os.path.exists(DB_PATH):
+        init_db()
+    port = int(os.environ.get("PORT", 8080))  # 👈 Quan trọng: Zeabur dùng PORT env
+    print(f"Server running on 0.0.0.0:{port}")
+    socketio.run(app, host="0.0.0.0", port=port)
